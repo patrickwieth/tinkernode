@@ -1,0 +1,32 @@
+{
+    "events": [
+        {
+            "type": "hours",
+            "begin": 7,
+            "end": 23,
+            "set": "itsDaytime",
+            "value": true
+        },
+        {
+            "type": "hours",
+            "begin": 16,
+            "end": 23,
+            "set": "itsEvening",
+            "value": true
+        }
+    ],
+    "actions": [
+        {
+            "type": "controlSwitch",
+            "control": "itsDaytime",
+            "channel": 7,
+            "switchID": 15
+        },
+        {
+            "type": "controlSwitch",
+            "control": "itsEvening",
+            "channel": 31,
+            "switchID": 4
+        }
+    ]
+}

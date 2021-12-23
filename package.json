@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.2",
+    "ramda": "^0.27.1",
     "tinkerforge": "^2.1.33"
   }
 }

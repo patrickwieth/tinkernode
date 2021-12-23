@@ -1,4 +1,5 @@
 var Tinkerforge = require('tinkerforge');
+var R = require('ramda')
 
 var HOST = 'localhost';
 var PORT = 4223;
@@ -37,14 +38,16 @@ app.get("/url", (req, res, next) => {
 });
 
 
+controlConfig = require('./control.json')
+
 //control cycle
-var updateInterval = 2000;
+var updateInterval = 5000;
 setInterval(control, updateInterval);
 
-let on = false
+let controlData = {}
 
-function control () {
 
+function handleEvent(event) {
     let date_ob = new Date();
     let hours = date_ob.getHours();
     let minutes = date_ob.getMinutes();
@@ -53,12 +56,27 @@ function control () {
     // prints time in HH:MM format
     console.log(hours + ":" + minutes + ":" + seconds);
 
-    if(minutes%2) {
-        rs.switchSocketA(7, 15, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_OFF);
-        on = false
-    } else {
-        rs.switchSocketA(7, 15, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_ON);
-        on = true
+    if (event.type === "hours") {
+        if (hours < event.begin || hours >= event.end)
+            controlData[event.set] = !event.value
+        else 
+            controlData[event.set] = event.value
     }
-    
+}
+
+function handleAction(action) {
+    if (action.type === "controlSwitch") {
+        
+        if(controlData[action.control]) {
+            console.log("switchin on", action.channel, action.switchID, controlData[action.control])
+            rs.switchSocketA(action.channel, action.switchID, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_ON);
+        }
+        else 
+            rs.switchSocketA(action.channel, action.switchID, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_OFF);
+    }
+}
+
+function control () {
+    R.forEach(handleEvent, controlConfig.events)
+    R.forEach(handleAction, controlConfig.actions)
 }
