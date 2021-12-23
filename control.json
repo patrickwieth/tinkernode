@@ -9,8 +9,8 @@
         },
         {
             "type": "hours",
-            "begin": 16,
-            "end": 23,
+            "begin": 15,
+            "end": 22,
             "set": "itsEvening",
             "value": true
         }
@@ -25,8 +25,8 @@
         {
             "type": "controlSwitch",
             "control": "itsEvening",
-            "channel": 31,
-            "switchID": 4
+            "channel": 7,
+            "switchID": 8
         }
     ]
 }
