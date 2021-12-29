@@ -67,16 +67,58 @@ function handleEvent(event) {
 function handleAction(action) {
     if (action.type === "controlSwitch") {
         
-        if(controlData[action.control]) {
-            console.log("switchin on", action.channel, action.switchID, controlData[action.control])
-            rs.switchSocketA(action.channel, action.switchID, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_ON);
-        }
+        let switchTo
+        if(controlData[action.control])
+            switchTo = Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_ON
         else 
-            rs.switchSocketA(action.channel, action.switchID, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_OFF);
+            switchTo = Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_OFF
+
+        asyncQueue.enqueue(() => {
+            return new Promise((resolve, reject) => {
+                rs.on(Tinkerforge.BrickletRemoteSwitch.CALLBACK_SWITCHING_DONE,() => {
+                    resolve()
+                })
+                rs.switchSocketA(action.channel, action.switchID, switchTo)
+            })
+        })
     }
 }
 
 function control () {
     R.forEach(handleEvent, controlConfig.events)
     R.forEach(handleAction, controlConfig.actions)
+}
+
+let asyncQueue = {
+    delay: 10,
+    isRunning: false,
+    queue: [],
+    enqueue: function(action) {
+        this.queue.push(action)
+
+        if (!this.isRunning) {
+            this.run()
+        }
+    },
+    enqueueWithDelay: function(action) {
+        let delayed = () => {
+            return new Promise((resolve, reject) => {
+                action()
+                setTimeout(resolve, this.delay)
+            })
+        } 
+        this.enqueue(delayed)
+    },
+    run: function() {
+        this.isRunning = true
+
+        if (!R.isEmpty(this.queue)) {
+            const action = this.queue[0]
+            this.queue = R.drop(1, this.queue)
+
+            action().finally(() => this.run())
+        } else {
+            this.isRunning = false
+        }
+    }
 }

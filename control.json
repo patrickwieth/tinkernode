@@ -18,15 +18,16 @@
     "actions": [
         {
             "type": "controlSwitch",
-            "control": "itsDaytime",
+            "control": "itsEvening",
             "channel": 7,
-            "switchID": 15
+            "switchID": 1
         },
         {
             "type": "controlSwitch",
-            "control": "itsEvening",
+            "control": "itsDaytime",
             "channel": 7,
-            "switchID": 8
+            "switchID": 15
         }
     ]
 }
+
