@@ -17,9 +17,9 @@
         {
             "type": "atMinutes",
             "minutes": [0, 15, 30, 45],
-            "duration": "20",
+            "duration": "10",
             "set": "restart",
-            "value": true
+            "value": false
         }
     ],
     "actions": [
