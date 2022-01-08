@@ -13,6 +13,13 @@
             "end": 22,
             "set": "itsEvening",
             "value": true
+        },
+        {
+            "type": "atMinutes",
+            "minutes": [0, 15, 30, 45],
+            "duration": "20",
+            "set": "restart",
+            "value": true
         }
     ],
     "actions": [
@@ -27,6 +34,12 @@
             "control": "itsDaytime",
             "channel": 7,
             "switchID": 15
+        },
+        {
+            "type": "controlSwitch",
+            "control": "restart",
+            "channel": 7,
+            "switchID": 2
         }
     ]
 }

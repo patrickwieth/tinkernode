@@ -61,6 +61,14 @@ function handleEvent(event) {
             controlData[event.set] = !event.value
         else 
             controlData[event.set] = event.value
+    } 
+    else if (event.type === "atMinutes") {
+        if (R.contains(minutes, event.minutes)) {
+            controlData[event.set] = event.value
+            setTimeout(() => {
+                controlData[event.set] = !event.value
+            }, event.duration)
+        }
     }
 }
 
