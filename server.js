@@ -3,10 +3,12 @@ var R = require('ramda')
 
 var HOST = 'localhost';
 var PORT = 4223;
-var UID = 'uYH'; // Change to your UID
+var rsUID = 'N3i'; // Change to your UID
+var ssrUID = 'MnZ'
 
 var ipcon = new Tinkerforge.IPConnection(); // Create IP connection
-var rs = new Tinkerforge.BrickletRemoteSwitch(UID, ipcon); // Create device object
+var rs = new Tinkerforge.BrickletRemoteSwitch(rsUID, ipcon); // remote switch connection
+var ssr = new Tinkerforge.BrickletSolidStateRelayV2(ssrUID, ipcon); // ssr switch connection
 
 ipcon.connect(HOST, PORT,
     function (error) {
@@ -22,9 +24,14 @@ ipcon.on(Tinkerforge.IPConnection.CALLBACK_CONNECTED,
         // Receiver code 1 is 10000 in binary (least-significant bit first)
         // and means that the DIP switch A is on and B-E are off.
         rs.switchSocketA(7, 15, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_OFF);
+
+	ssr.setMonoflop(true, 1000, function(res) {
+		}, function(err) {
+		console.log("err:"+err)
+	})
+
     }
 );
-
 
 
 var express = require("express");
@@ -63,18 +70,21 @@ function handleEvent(event) {
             controlData[event.set] = event.value
     } 
     else if (event.type === "atMinutes") {
-        if (R.contains(minutes, event.minutes)) {
+        if (R.contains(minutes, event.minutes) && seconds < 10) {
             controlData[event.set] = event.value
-            setTimeout(() => {
-                controlData[event.set] = !event.value
-            }, event.duration)
+	    if (event.duration) {
+		console.log("duration found, for "+event.duration+" set "+event.set+" to "+event.value)
+        	setTimeout(() => {
+        	    controlData[event.set] = !event.value
+			console.log("shut off"+event.set)
+        	}, event.duration)
+	    }
         }
     }
 }
 
 function handleAction(action) {
-    if (action.type === "controlSwitch") {
-        
+     if (action.type === "controlSwitch") {
         let switchTo
         if(controlData[action.control])
             switchTo = Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_ON
@@ -89,6 +99,15 @@ function handleAction(action) {
                 rs.switchSocketA(action.channel, action.switchID, switchTo)
             })
         })
+    }
+    if (action.type === "controlSSR") {
+	console.log("action: ")
+	console.log(action)
+	console.log("controlData " + controlData[action.control])
+        if(controlData[action.control])
+	    ssr.setState(true)
+        else
+	    ssr.setState(false)
     }
 }
 
