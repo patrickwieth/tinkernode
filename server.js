@@ -1,4 +1,5 @@
-var Tinkerforge = require('tinkerforge');
+var Tinkerforge = require('tinkerforge')
+var http = require('http')
 var R = require('ramda')
 
 var HOST = 'localhost';
@@ -108,6 +109,12 @@ function handleAction(action) {
 	    ssr.setState(true)
         else
 	    ssr.setState(false)
+    }
+    if (action.type === "HTTPheartbeat") {
+        console.log("HTTPheartbeat at ", action.route)
+        http.get(action.route, res => {
+          console.log("Heartbeat res statusCode: ", res.statusCode)
+        })
     }
 }
 

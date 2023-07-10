@@ -51,7 +51,11 @@
         {
             "type": "controlSSR",
             "control": "power"
-        }
+        },
+	{
+	    "type": "HTTPheartbeat",
+	    "route": "http://194.163.191.252:8080/hydroponic/nice"
+	}
     ]
 }
 
