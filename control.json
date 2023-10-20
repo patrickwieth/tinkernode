@@ -2,8 +2,8 @@
     "events": [
         {
             "type": "hours",
-            "begin": 7,
-            "end": 23,
+            "begin": 9,
+            "end": 17,
             "set": "itsDaytime",
             "value": true
         },
@@ -41,12 +41,6 @@
             "control": "itsDaytime",
             "channel": 7,
             "switchID": 15
-        },
-        {
-            "type": "controlSwitch",
-            "control": "restart",
-            "channel": 7,
-            "switchID": 2
         },
         {
             "type": "controlSSR",

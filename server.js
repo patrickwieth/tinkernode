@@ -8,7 +8,7 @@ var rsUID = 'N3i'; // Change to your UID
 var ssrUID = 'MnZ'
 
 var ipcon = new Tinkerforge.IPConnection(); // Create IP connection
-var rs = new Tinkerforge.BrickletRemoteSwitch(rsUID, ipcon); // remote switch connection
+var rs = new Tinkerforge.BrickletRemoteSwitchV2(rsUID, ipcon); // remote switch connection
 var ssr = new Tinkerforge.BrickletSolidStateRelayV2(ssrUID, ipcon); // ssr switch connection
 
 ipcon.connect(HOST, PORT,
@@ -19,18 +19,18 @@ ipcon.connect(HOST, PORT,
 
 ipcon.on(Tinkerforge.IPConnection.CALLBACK_CONNECTED,
     function (connectReason) {
+	// this is for fast debugging the remote switches
+        rs.switchSocketA(7, 15, Tinkerforge.BrickletRemoteSwitchV2.SWITCH_TO_ON);
         // Switch on a type A socket with house code 17 and receiver code 1.
         // House code 17 is 10001 in binary (least-significant bit first)
         // and means that the DIP switches 1 and 5 are on and 2-4 are off.
         // Receiver code 1 is 10000 in binary (least-significant bit first)
         // and means that the DIP switch A is on and B-E are off.
-        rs.switchSocketA(7, 15, Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_OFF);
 
 	ssr.setMonoflop(true, 1000, function(res) {
 		}, function(err) {
 		console.log("err:"+err)
 	})
-
     }
 );
 
@@ -60,9 +60,6 @@ function handleEvent(event) {
     let hours = date_ob.getHours();
     let minutes = date_ob.getMinutes();
     let seconds = date_ob.getSeconds();
-    
-    // prints time in HH:MM format
-    console.log(hours + ":" + minutes + ":" + seconds);
 
     if (event.type === "hours") {
         if (hours < event.begin || hours >= event.end)
@@ -86,25 +83,27 @@ function handleEvent(event) {
 
 function handleAction(action) {
      if (action.type === "controlSwitch") {
-        let switchTo
-        if(controlData[action.control])
-            switchTo = Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_ON
-        else 
-            switchTo = Tinkerforge.BrickletRemoteSwitch.SWITCH_TO_OFF
 
-        asyncQueue.enqueue(() => {
-            return new Promise((resolve, reject) => {
-                rs.on(Tinkerforge.BrickletRemoteSwitch.CALLBACK_SWITCHING_DONE,() => {
-                    resolve()
+        let switchTo
+        if(controlData[action.control]) {
+		switchTo = Tinkerforge.BrickletRemoteSwitchV2.SWITCH_TO_ON
+		console.log("switched on", action.control)
+	}
+        else {
+		console.log("switched off", action.control)
+            switchTo = Tinkerforge.BrickletRemoteSwitchV2.SWITCH_TO_OFF
+	}
+
+	asyncQueue.enqueue(() => {
+		rs.switchSocketA(action.channel, action.switchID, switchTo)			
+		return new Promise((resolve, reject) => {
+		rs.on(Tinkerforge.BrickletRemoteSwitchV2.CALLBACK_SWITCHING_DONE,() => {
+		resolve()
                 })
-                rs.switchSocketA(action.channel, action.switchID, switchTo)
             })
         })
     }
     if (action.type === "controlSSR") {
-	console.log("action: ")
-	console.log(action)
-	console.log("controlData " + controlData[action.control])
         if(controlData[action.control])
 	    ssr.setState(true)
         else
@@ -112,13 +111,24 @@ function handleAction(action) {
     }
     if (action.type === "HTTPheartbeat") {
         console.log("HTTPheartbeat at ", action.route)
-        http.get(action.route, res => {
-          console.log("Heartbeat res statusCode: ", res.statusCode)
-        })
+	try {
+        	http.get(action.route, res => {
+          		console.log("Heartbeat res statusCode: ", res.statusCode)
+        	}).on("error", function (){console.log("GET request error")});
+	} catch (error) {
+		console.error(error)
+	}
     }
 }
 
 function control () {
+    let date_ob = new Date();
+    let hours = date_ob.getHours();
+    let minutes = date_ob.getMinutes();
+    let seconds = date_ob.getSeconds();
+
+    console.log(hours + ":" + minutes + ":" + seconds);
+
     R.forEach(handleEvent, controlConfig.events)
     R.forEach(handleAction, controlConfig.actions)
 }
@@ -136,7 +146,7 @@ let asyncQueue = {
     },
     enqueueWithDelay: function(action) {
         let delayed = () => {
-            return new Promise((resolve, reject) => {
+	return new Promise((resolve, reject) => {
                 action()
                 setTimeout(resolve, this.delay)
             })
